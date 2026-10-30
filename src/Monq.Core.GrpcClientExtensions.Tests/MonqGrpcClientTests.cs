@@ -1,7 +1,9 @@
 using Grpc.Core;
+using Grpc.Core.Interceptors;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Configuration;
 using Grpc.Net.ClientFactory;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -275,6 +277,72 @@ public class MonqGrpcClientTests
         Assert.Equal(123L, channelOptions.MaxReceiveMessageSize!.Value);
         Assert.Same(ChannelCredentials.Insecure, channelOptions.Credentials);
     }
+
+    [Fact]
+    public void HeaderPropagation_AddsUserspaceAndCultureFromHttpContext()
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["X-Smon-Userspace-Id"] = "42";
+        httpContext.Request.Headers["Accept-Language"] = "ru-RU";
+
+        var interceptor = new MonqHeaderPropagationInterceptor(
+            new HttpContextAccessor { HttpContext = httpContext });
+
+        var headers = InterceptUnary(interceptor, new CallOptions());
+
+        Assert.Equal("42", GetHeader(headers, "x-smon-userspace-id"));
+        Assert.Equal("ru-RU", GetHeader(headers, "accept-language"));
+    }
+
+    [Fact]
+    public void HeaderPropagation_KeepsHeadersSetOnCall()
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["X-Smon-Userspace-Id"] = "42";
+
+        var interceptor = new MonqHeaderPropagationInterceptor(
+            new HttpContextAccessor { HttpContext = httpContext });
+
+        var callOptions = new CallOptions().WithHeaders(new Metadata { { "x-smon-userspace-id", "7" } });
+
+        var headers = InterceptUnary(interceptor, callOptions);
+
+        Assert.NotNull(headers);
+        Assert.Single(headers, header => header.Key.Equals("x-smon-userspace-id", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("7", GetHeader(headers, "x-smon-userspace-id"));
+    }
+
+    [Fact]
+    public void HeaderPropagation_NoHttpContextLeavesCallUntouched()
+    {
+        var interceptor = new MonqHeaderPropagationInterceptor(httpContextAccessor: null);
+
+        var headers = InterceptUnary(interceptor, new CallOptions());
+
+        Assert.Null(headers);
+    }
+
+    static Metadata? InterceptUnary(MonqHeaderPropagationInterceptor interceptor, CallOptions callOptions)
+    {
+        var marshaller = new Marshaller<string>(
+            value => System.Text.Encoding.UTF8.GetBytes(value),
+            bytes => System.Text.Encoding.UTF8.GetString(bytes));
+        var method = new Method<string, string>(
+            MethodType.Unary, "sample.SampleService", "Call", marshaller, marshaller);
+        var context = new ClientInterceptorContext<string, string>(method, host: null, callOptions);
+
+        Metadata? captured = null;
+        interceptor.BlockingUnaryCall("request", context, (_, modifiedContext) =>
+        {
+            captured = modifiedContext.Options.Headers;
+            return "response";
+        });
+
+        return captured;
+    }
+
+    static string? GetHeader(Metadata? headers, string key) =>
+        headers?.FirstOrDefault(header => header.Key.Equals(key, StringComparison.OrdinalIgnoreCase))?.Value;
 
     static Mock<IMicroserviceAddressProvider> CreateAddressProvider(
         Uri address,

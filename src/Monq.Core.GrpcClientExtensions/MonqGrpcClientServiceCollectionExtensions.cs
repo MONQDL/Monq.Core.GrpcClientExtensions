@@ -284,6 +284,13 @@ public static class MonqGrpcClientServiceCollectionExtensions
             ? services.AddGrpcClient<TClient>(ConfigureFactoryOptions)
             : services.AddGrpcClient<TClient>(name, ConfigureFactoryOptions);
 
+        // Header propagation was part of the legacy pre-configured clients
+        // (AdditionalHeadersInterceptor in Monq.Core.BasicDotNetMicroservice); consumers that
+        // register through this library directly must keep receiving it, otherwise services like
+        // MyLimits reject the call with "Header x-smon-userspace-id not defined".
+        builder = builder.AddInterceptor(static provider =>
+            new MonqHeaderPropagationInterceptor(provider.GetService<IHttpContextAccessor>()));
+
         if (options?.ChannelOptionsAction is not null)
             builder = builder.ConfigureChannel(options.ChannelOptionsAction);
 
