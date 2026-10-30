@@ -207,7 +207,8 @@ public static class MonqGrpcClientServiceCollectionExtensions
         return services;
     }
 
-    static IHttpClientBuilder AddMonqGrpcClientCore<TClient>(
+    static IHttpClientBuilder AddMonqGrpcClientCore<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string? name,
         Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,
@@ -220,7 +221,8 @@ public static class MonqGrpcClientServiceCollectionExtensions
             options,
             consoleClient);
 
-    static IHttpClientBuilder AddMonqGrpcClientCore<TClient>(
+    static IHttpClientBuilder AddMonqGrpcClientCore<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string? name,
         Func<IServiceProvider, ResolvedMicroserviceAddress> addressFactory,
