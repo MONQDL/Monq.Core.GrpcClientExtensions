@@ -15,10 +15,10 @@ namespace Monq.Core.GrpcClientExtensions.Tests;
 public class MonqGrpcClientTests
 {
     const string clientName = "test-grpc-client";
-    const string applicationName = "pl-userspaces-api-service";
+    const string applicationName = "sample-api-service";
 
-    static Uri DnsAddress => new("dns:///pl-userspaces-api-service-grpc.integration.svc.cluster.local:5006");
-    static Uri HttpAddress => new("http://pl-userspaces-api-service.integration.svc.cluster.local:5006");
+    static Uri DnsAddress => new("dns:///sample-api-service-grpc.integration.svc.cluster.local:5006");
+    static Uri HttpAddress => new("http://sample-api-service.integration.svc.cluster.local:5006");
 
     [Fact]
     public void AddMonqGrpcClient_ResolvesAddressLazilyOnFirstCreate()

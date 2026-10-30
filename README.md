@@ -23,22 +23,22 @@ builder.Services.AddMicroserviceAddressing();
 builder.Host.UseGrpcMicroserviceAddressResolver(new KubernetesServiceDiscoveryAddressResolver());
 
 // Address resolved by application name on the first client creation.
-builder.Services.AddMonqGrpcClient<ThresholdsService.ThresholdsServiceClient>("mcs-thresholds-service");
+builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>("sample-api-service");
 
 // Named registration for several clients of the same type.
-builder.Services.AddMonqGrpcClient<ThresholdsService.ThresholdsServiceClient>(
+builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
     name: "secondary",
-    applicationName: "mcs-thresholds-service",
+    applicationName: "sample-api-service",
     port: 5006,
     addressResolver: new FixedMicroserviceAddressResolver(new Uri("http://localhost:5006")));
 
 // Settings resolved lazily — for composed libraries.
-builder.Services.AddMonqGrpcClient<ThresholdsService.ThresholdsServiceClient>(
-    "thresholds",
-    provider => provider.GetRequiredService<ThresholdsAddressingSettings>().ToGrpcSettings());
+builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
+    "sample",
+    provider => new GrpcClientAddressSettings("sample-api-service", 5006));
 
 // Fixed address for local debugging.
-builder.Services.AddMonqGrpcClient<ThresholdsService.ThresholdsServiceClient>(
+builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
     new Uri("http://localhost:5006"));
 ```
 
@@ -46,8 +46,8 @@ Background and console clients use the console variants and receive call credent
 static token fallback:
 
 ```csharp
-builder.Services.AddMonqGrpcConsoleClient<PoliciesService.PoliciesServiceClient>(
-    "pl-userspaces-api-service");
+builder.Services.AddMonqGrpcConsoleClient<SampleService.SampleServiceClient>(
+    "sample-api-service");
 ```
 
 ## Service discovery options
@@ -68,6 +68,5 @@ builder.Services.ConfigureMonqGrpcServiceDiscovery(options =>
 
 ## Roadmap
 
-`Monq.Core.BasicDotNetMicroservice` and `Monq.Core.CloudShard` move their gRPC registration
-internals onto this package without changing their public APIs; composed libraries such as
-`Monq.Policies.Server` and `Monq.Core.Statistics.Server` are expected to use it directly.
+MONQ service frameworks move their gRPC registration internals onto this package without
+changing their public APIs; composed server libraries are expected to use it directly.
