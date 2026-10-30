@@ -243,6 +243,20 @@ public class MonqGrpcClientTests
             provider.GetRequiredService<IOptions<GrpcServiceDiscoveryOptions>>().Value);
     }
 
+    [Fact]
+    public void AddMonqGrpcConsoleClient_FixedAddressAppliesCredentialsAndCallCredentials()
+    {
+        var services = new ServiceCollection();
+        services.AddMonqGrpcConsoleClient<TestServiceClient>(clientName, DnsAddress);
+
+        var channelOptions = CreateChannelOptions(services, clientName);
+
+        Assert.Same(ChannelCredentials.Insecure, channelOptions.Credentials);
+        Assert.True(channelOptions.UnsafeUseInsecureChannelCallCredentials);
+        Assert.Contains(channelOptions.ServiceConfig?.LoadBalancingConfigs ?? [],
+            config => config is RoundRobinConfig);
+    }
+
     static Mock<IMicroserviceAddressProvider> CreateAddressProvider(
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct)

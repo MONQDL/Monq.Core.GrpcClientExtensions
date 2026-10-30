@@ -145,7 +145,7 @@ public static class MonqGrpcClientServiceCollectionExtensions
             consoleClient: true);
 
     /// <summary>
-    /// Adds a console/background gRPC client for composed libraries: the settings are resolved
+    /// Adds a named console/background gRPC client for composed libraries: the settings are resolved
     /// lazily from the service provider. See the console overload by application name.
     /// </summary>
     public static IHttpClientBuilder AddMonqGrpcConsoleClient<
@@ -156,6 +156,40 @@ public static class MonqGrpcClientServiceCollectionExtensions
         GrpcClientOptions? options = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(name, settingsFactory, options, consoleClient: true);
+
+    /// <summary>
+    /// Adds a console/background gRPC client with a fixed address. See the console overload
+    /// by application name for the credentials behavior.
+    /// </summary>
+    public static IHttpClientBuilder AddMonqGrpcConsoleClient<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
+        this IServiceCollection services,
+        Uri address,
+        EndpointResolutionMode mode = EndpointResolutionMode.Direct,
+        GrpcClientOptions? options = null)
+        where TClient : class =>
+        services.AddMonqGrpcClientCore<TClient>(
+            name: null,
+            _ => new ResolvedMicroserviceAddress(address, mode),
+            options,
+            consoleClient: true);
+
+    /// <summary>
+    /// Adds a named console/background gRPC client with a fixed address.
+    /// </summary>
+    public static IHttpClientBuilder AddMonqGrpcConsoleClient<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
+        this IServiceCollection services,
+        string name,
+        Uri address,
+        EndpointResolutionMode mode = EndpointResolutionMode.Direct,
+        GrpcClientOptions? options = null)
+        where TClient : class =>
+        services.AddMonqGrpcClientCore<TClient>(
+            name,
+            _ => new ResolvedMicroserviceAddress(address, mode),
+            options,
+            consoleClient: true);
 
     /// <summary>
     /// Configures the shared DNS refresh interval used by all gRPC clients resolved in
