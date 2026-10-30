@@ -40,6 +40,12 @@ builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
 // Fixed address for local debugging.
 builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
     new Uri("http://localhost:5006"));
+
+// Additional client/channel configuration via a lambda.
+builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
+    "sample-api-service",
+    configureOptions: options => options.ChannelOptionsAction =
+        channelOptions => channelOptions.MaxReceiveMessageSize = null);
 ```
 
 Background and console clients use the console variants and receive call credentials with

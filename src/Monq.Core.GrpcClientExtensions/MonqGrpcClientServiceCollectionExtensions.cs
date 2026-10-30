@@ -33,12 +33,14 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string applicationName,
         int? port = null,
         IMicroserviceAddressResolver? addressResolver = null,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name: null,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
+            configureOptions,
             consoleClient: false);
 
     /// <summary>
@@ -52,12 +54,14 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string applicationName,
         int? port = null,
         IMicroserviceAddressResolver? addressResolver = null,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
+            configureOptions,
             consoleClient: false);
 
     /// <summary>
@@ -69,9 +73,10 @@ public static class MonqGrpcClientServiceCollectionExtensions
         this IServiceCollection services,
         string name,
         Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(name, settingsFactory, options, consoleClient: false);
+        services.AddMonqGrpcClientCore<TClient>(name, settingsFactory, options, configureOptions, consoleClient: false);
 
     /// <summary>
     /// Adds a gRPC client with a fixed address. The resolvers are not consulted; use it for local
@@ -82,12 +87,14 @@ public static class MonqGrpcClientServiceCollectionExtensions
         this IServiceCollection services,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name: null,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
+            configureOptions,
             consoleClient: false);
 
     /// <summary>
@@ -99,12 +106,14 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string name,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
+            configureOptions,
             consoleClient: false);
 
     /// <summary>
@@ -118,12 +127,14 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string applicationName,
         int? port = null,
         IMicroserviceAddressResolver? addressResolver = null,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name: null,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
+            configureOptions,
             consoleClient: true);
 
     /// <summary>
@@ -136,12 +147,14 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string applicationName,
         int? port = null,
         IMicroserviceAddressResolver? addressResolver = null,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
+            configureOptions,
             consoleClient: true);
 
     /// <summary>
@@ -153,9 +166,10 @@ public static class MonqGrpcClientServiceCollectionExtensions
         this IServiceCollection services,
         string name,
         Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(name, settingsFactory, options, consoleClient: true);
+        services.AddMonqGrpcClientCore<TClient>(name, settingsFactory, options, configureOptions, consoleClient: true);
 
     /// <summary>
     /// Adds a console/background gRPC client with a fixed address. See the console overload
@@ -166,12 +180,14 @@ public static class MonqGrpcClientServiceCollectionExtensions
         this IServiceCollection services,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name: null,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
+            configureOptions,
             consoleClient: true);
 
     /// <summary>
@@ -183,12 +199,14 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string name,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
-        GrpcClientOptions? options = null)
+        GrpcClientOptions? options = null,
+        Action<GrpcClientOptions>? configureOptions = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
+            configureOptions,
             consoleClient: true);
 
     /// <summary>
@@ -213,12 +231,14 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string? name,
         Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,
         GrpcClientOptions? options,
+        Action<GrpcClientOptions>? configureOptions,
         bool consoleClient)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name,
             provider => ResolveAddress(provider, settingsFactory(provider)),
             options,
+            configureOptions,
             consoleClient);
 
     static IHttpClientBuilder AddMonqGrpcClientCore<
@@ -227,11 +247,18 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string? name,
         Func<IServiceProvider, ResolvedMicroserviceAddress> addressFactory,
         GrpcClientOptions? options,
+        Action<GrpcClientOptions>? configureOptions,
         bool consoleClient)
         where TClient : class
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(addressFactory);
+
+        if (configureOptions is not null)
+        {
+            options ??= new GrpcClientOptions();
+            configureOptions(options);
+        }
 
         services.AddMicroserviceAddressing();
 

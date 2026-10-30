@@ -257,6 +257,25 @@ public class MonqGrpcClientTests
             config => config is RoundRobinConfig);
     }
 
+    [Fact]
+    public void AddMonqGrpcClient_ConfigureOptionsLambdaIsApplied()
+    {
+        var addressProvider = CreateAddressProvider(DnsAddress, EndpointResolutionMode.ServiceDiscovery);
+
+        var services = new ServiceCollection();
+        services.AddSingleton(addressProvider.Object);
+        services.AddMonqGrpcClient<TestServiceClient>(
+            clientName,
+            applicationName,
+            configureOptions: options => options.ChannelOptionsAction =
+                channelOptions => channelOptions.MaxReceiveMessageSize = 123);
+
+        var channelOptions = CreateChannelOptions(services, clientName);
+
+        Assert.Equal(123L, channelOptions.MaxReceiveMessageSize!.Value);
+        Assert.Same(ChannelCredentials.Insecure, channelOptions.Credentials);
+    }
+
     static Mock<IMicroserviceAddressProvider> CreateAddressProvider(
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct)
