@@ -260,22 +260,69 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMonqGrpcClient_ConfigureOptionsLambdaIsApplied()
+    public void AddMonqGrpcClient_AppliesPreConfiguredDefaultsAndOptionsObject()
     {
-        var addressProvider = CreateAddressProvider(DnsAddress, EndpointResolutionMode.ServiceDiscovery);
-
         var services = new ServiceCollection();
-        services.AddSingleton(addressProvider.Object);
+        services.AddSingleton(CreateAddressProvider(DnsAddress, EndpointResolutionMode.ServiceDiscovery).Object);
+
         services.AddMonqGrpcClient<TestServiceClient>(
             clientName,
             applicationName,
-            configureOptions: options => options.ChannelOptionsAction =
-                channelOptions => channelOptions.MaxReceiveMessageSize = 123);
+            options: new GrpcClientOptions
+            {
+                ChannelOptionsAction = channelOptions => channelOptions.MaxReceiveMessageSize = 123,
+            });
 
         var channelOptions = CreateChannelOptions(services, clientName);
 
         Assert.Equal(123L, channelOptions.MaxReceiveMessageSize!.Value);
         Assert.Same(ChannelCredentials.Insecure, channelOptions.Credentials);
+    }
+
+    [Fact]
+    public void AddMonqGrpcClient_AppliesLegacyPreConfiguredDefaults()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(CreateAddressProvider(HttpAddress).Object);
+
+        services.AddMonqGrpcClient<TestServiceClient>(clientName, applicationName);
+
+        Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IHttpContextAccessor));
+
+        using var provider = services.BuildServiceProvider();
+        var factoryOptions = provider
+            .GetRequiredService<IOptionsMonitor<GrpcClientFactoryOptions>>()
+            .Get(clientName);
+
+        var channelOptions = new GrpcChannelOptions();
+
+        foreach (var configureChannel in factoryOptions.ChannelOptionsActions)
+            configureChannel(channelOptions);
+
+        Assert.True(channelOptions.UnsafeUseInsecureChannelCallCredentials);
+        Assert.Equal(51 * 1024 * 1024, channelOptions.MaxReceiveMessageSize!.Value);
+        // Header propagation interceptor + call context (event id) propagation interceptor.
+        Assert.Equal(2, factoryOptions.InterceptorRegistrations.Count);
+    }
+
+    [Fact]
+    public void AddMonqGrpcClient_UserChannelOptionsOverrideDefaults()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(CreateAddressProvider(HttpAddress).Object);
+
+        services.AddMonqGrpcClient<TestServiceClient>(
+            clientName,
+            applicationName,
+            options: new GrpcClientOptions
+            {
+                ChannelOptionsAction = channelOptions => channelOptions.MaxReceiveMessageSize = 2048,
+            });
+
+        var channelOptions = CreateChannelOptions(services, clientName);
+
+        Assert.Equal(2048L, channelOptions.MaxReceiveMessageSize!.Value);
+        Assert.True(channelOptions.UnsafeUseInsecureChannelCallCredentials);
     }
 
     [Fact]

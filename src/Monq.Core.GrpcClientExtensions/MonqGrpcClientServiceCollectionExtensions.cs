@@ -18,9 +18,13 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Extension methods for registering gRPC clients that resolve their addresses through
-/// <see cref="IMicroserviceAddressProvider"/>. Registration applies the transport rules shared
-/// by all MONQ services: scheme-aware channel credentials and round-robin balancing for
-/// load-balanced (Service Discovery / <c>dns</c>) addresses.
+/// <see cref="IMicroserviceAddressProvider"/>. Registration applies the behavior of the legacy
+/// pre-configured clients from Monq.Core.BasicDotNetMicroservice: scheme-aware channel credentials,
+/// round-robin balancing for load-balanced (Service Discovery / <c>dns</c>) addresses, userspace and
+/// culture header propagation, insecure-channel call credentials, a 51 MB receive limit, call
+/// context (event id) propagation, and <c>Authorization</c> forwarding from the current HTTP
+/// request (with a static token fallback for console clients). Channel defaults are applied before
+/// user-provided actions, so every default can be overridden through <see cref="GrpcClientOptions"/>.
 /// </summary>
 public static class MonqGrpcClientServiceCollectionExtensions
 {
@@ -33,14 +37,13 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string applicationName,
         int? port = null,
         IMicroserviceAddressResolver? addressResolver = null,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name: null,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
-            configureOptions,
+            configureOptions: null,
             consoleClient: false);
 
     /// <summary>
@@ -54,14 +57,13 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string applicationName,
         int? port = null,
         IMicroserviceAddressResolver? addressResolver = null,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
-            configureOptions,
+            configureOptions: null,
             consoleClient: false);
 
     /// <summary>
@@ -73,10 +75,10 @@ public static class MonqGrpcClientServiceCollectionExtensions
         this IServiceCollection services,
         string name,
         Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(name, settingsFactory, options, configureOptions, consoleClient: false);
+        services.AddMonqGrpcClientCore<TClient>(
+            name, settingsFactory, options, configureOptions: null, consoleClient: false);
 
     /// <summary>
     /// Adds a gRPC client with a fixed address. The resolvers are not consulted; use it for local
@@ -87,14 +89,13 @@ public static class MonqGrpcClientServiceCollectionExtensions
         this IServiceCollection services,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name: null,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
-            configureOptions,
+            configureOptions: null,
             consoleClient: false);
 
     /// <summary>
@@ -106,14 +107,13 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string name,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
-            configureOptions,
+            configureOptions: null,
             consoleClient: false);
 
     /// <summary>
@@ -127,14 +127,13 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string applicationName,
         int? port = null,
         IMicroserviceAddressResolver? addressResolver = null,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name: null,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
-            configureOptions,
+            configureOptions: null,
             consoleClient: true);
 
     /// <summary>
@@ -147,14 +146,13 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string applicationName,
         int? port = null,
         IMicroserviceAddressResolver? addressResolver = null,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
-            configureOptions,
+            configureOptions: null,
             consoleClient: true);
 
     /// <summary>
@@ -166,10 +164,10 @@ public static class MonqGrpcClientServiceCollectionExtensions
         this IServiceCollection services,
         string name,
         Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(name, settingsFactory, options, configureOptions, consoleClient: true);
+        services.AddMonqGrpcClientCore<TClient>(
+            name, settingsFactory, options, configureOptions: null, consoleClient: true);
 
     /// <summary>
     /// Adds a console/background gRPC client with a fixed address. See the console overload
@@ -180,14 +178,13 @@ public static class MonqGrpcClientServiceCollectionExtensions
         this IServiceCollection services,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name: null,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
-            configureOptions,
+            configureOptions: null,
             consoleClient: true);
 
     /// <summary>
@@ -199,14 +196,13 @@ public static class MonqGrpcClientServiceCollectionExtensions
         string name,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
-        GrpcClientOptions? options = null,
-        Action<GrpcClientOptions>? configureOptions = null)
+        GrpcClientOptions? options = null)
         where TClient : class =>
         services.AddMonqGrpcClientCore<TClient>(
             name,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
-            configureOptions,
+            configureOptions: null,
             consoleClient: true);
 
     /// <summary>
@@ -291,11 +287,33 @@ public static class MonqGrpcClientServiceCollectionExtensions
         builder = builder.AddInterceptor(static provider =>
             new MonqHeaderPropagationInterceptor(provider.GetService<IHttpContextAccessor>()));
 
+        // Defaults of the legacy Monq.Core.BasicDotNetMicroservice pre-configured clients. They are
+        // applied before user-provided actions, so every default can be overridden per client.
+        builder = builder.ConfigureChannel(static channelOptions =>
+        {
+            channelOptions.UnsafeUseInsecureChannelCallCredentials = true;
+            channelOptions.MaxReceiveMessageSize = 51 * 1024 * 1024;
+        });
+
         if (options?.ChannelOptionsAction is not null)
             builder = builder.ConfigureChannel(options.ChannelOptionsAction);
 
+        // Interactive clients forward the incoming Authorization header (legacy pre-configured
+        // behavior); console clients forward it with a static token fallback.
         if (consoleClient)
             builder = builder.AddConsoleCallCredentials();
+        else
+            builder = builder.AddCallCredentials(static (context, metadata, provider) =>
+            {
+                var httpContext = provider.GetService<IHttpContextAccessor>()?.HttpContext;
+
+                if (httpContext?.Request.Headers
+                        .TryGetValue(HttpRequestHeader.Authorization.ToString(), out var token) == true
+                    && !string.IsNullOrEmpty(token))
+                    metadata.Add(HttpRequestHeader.Authorization.ToString(), token!);
+
+                return Task.CompletedTask;
+            });
 
         builder.ConfigureChannel(channelOptions =>
         {
@@ -319,6 +337,10 @@ public static class MonqGrpcClientServiceCollectionExtensions
                 };
             }
         });
+
+        // Event id (call context) propagation was enabled by the legacy pre-configured clients.
+        builder = builder.EnableCallContextPropagation(static propagationOptions =>
+            propagationOptions.SuppressContextNotFoundErrors = true);
 
         if (options?.ContextPropagationOptionsAction is not null)
             builder = builder.EnableCallContextPropagation(options.ContextPropagationOptionsAction);

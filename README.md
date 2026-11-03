@@ -41,11 +41,13 @@ builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
 builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
     new Uri("http://localhost:5006"));
 
-// Additional client/channel configuration via a lambda.
+// Additional client/channel configuration via the options object.
 builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
     "sample-api-service",
-    configureOptions: options => options.ChannelOptionsAction =
-        channelOptions => channelOptions.MaxReceiveMessageSize = null);
+    options: new GrpcClientOptions
+    {
+        ChannelOptionsAction = channelOptions => channelOptions.MaxReceiveMessageSize = null,
+    });
 ```
 
 Background and console clients use the console variants and receive call credentials with
@@ -71,6 +73,19 @@ builder.Services.ConfigureMonqGrpcServiceDiscovery(options =>
 | `dns:///` (Service Discovery, headless Service) | `Insecure` | round-robin over resolved pods |
 | `ipv4:///`, `unix:/`, custom schemes | `Insecure` | per resolver semantics |
 | Fixed URI (`Uri` overloads) | scheme-aware | round-robin only for the `dns` scheme |
+
+Every registered client also receives the defaults of the legacy pre-configured clients from
+`Monq.Core.BasicDotNetMicroservice`:
+
+- propagation of the `X-Smon-Userspace-Id` and `Accept-Language` headers from the current HTTP
+  request to the outgoing gRPC metadata (`MonqHeaderPropagationInterceptor`);
+- `MaxReceiveMessageSize` = 51 MB and `UnsafeUseInsecureChannelCallCredentials` = `true`;
+- call context (event id) propagation (`EnableCallContextPropagation`);
+- `Authorization` forwarding from the current HTTP request — interactive clients forward it as is,
+  console clients additionally fall back to a static token via `RestHttpClient`.
+
+Defaults are applied before the actions of `GrpcClientOptions`, so each default can be overridden
+per client.
 
 ## Roadmap
 
