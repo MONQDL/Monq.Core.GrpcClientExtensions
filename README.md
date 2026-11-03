@@ -76,8 +76,7 @@ builder.Services.ConfigureMonqGrpcServiceDiscovery(options =>
 | `ipv4:///`, `unix:/`, custom schemes | `Insecure` | per resolver semantics |
 | Fixed URI (`Uri` overloads) | scheme-aware | round-robin only for the `dns` scheme |
 
-Every registered client also receives the defaults of the legacy pre-configured clients from
-`Monq.Core.BasicDotNetMicroservice`:
+Every registered client also receives the MONQ defaults:
 
 - propagation of the `X-Smon-Userspace-Id` and `Accept-Language` headers from the current HTTP
   request to the outgoing gRPC metadata (`HeaderPropagationInterceptor`);

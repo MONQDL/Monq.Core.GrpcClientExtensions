@@ -18,13 +18,13 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Extension methods for registering gRPC clients that resolve their addresses through
-/// <see cref="IMicroserviceAddressProvider"/>. Registration applies the behavior of the legacy
-/// pre-configured clients from Monq.Core.BasicDotNetMicroservice: scheme-aware channel credentials,
-/// round-robin balancing for load-balanced (Service Discovery / <c>dns</c>) addresses, userspace and
-/// culture header propagation, insecure-channel call credentials, a 51 MB receive limit, call
-/// context (event id) propagation, and <c>Authorization</c> forwarding from the current HTTP
-/// request (with a static token fallback for console clients). Channel defaults are applied before
-/// user-provided actions, so every default can be overridden through <see cref="GrpcClientOptions"/>.
+/// <see cref="IMicroserviceAddressProvider"/>. Every registered client receives MONQ defaults:
+/// scheme-aware channel credentials, round-robin balancing for load-balanced (Service Discovery /
+/// <c>dns</c>) addresses, userspace and culture header propagation, insecure-channel call
+/// credentials, a 51 MB receive limit, call context (event id) propagation, and
+/// <c>Authorization</c> forwarding from the current HTTP request (with a static token fallback
+/// for console clients). Defaults are applied before user-provided actions, so every default can
+/// be overridden through <see cref="GrpcClientOptions"/>.
 /// </summary>
 public static class GrpcClientExtensions
 {
@@ -260,15 +260,14 @@ public static class GrpcClientExtensions
             ? services.AddGrpcClient<TClient>(ConfigureFactoryOptions)
             : services.AddGrpcClient<TClient>(name, ConfigureFactoryOptions);
 
-        // Header propagation was part of the legacy pre-configured clients
-        // (AdditionalHeadersInterceptor in Monq.Core.BasicDotNetMicroservice); consumers that
-        // register through this library directly must keep receiving it, otherwise services like
-        // MyLimits reject the call with "Header x-smon-userspace-id not defined".
+        // Userspace and culture header propagation is required by MONQ services: without it,
+        // endpoints like MyLimits reject the call with "Header x-smon-userspace-id not defined".
+        // Headers set explicitly on the call take precedence (see HeaderPropagationInterceptor).
         builder = builder.AddInterceptor(static provider =>
             new HeaderPropagationInterceptor(provider.GetService<IHttpContextAccessor>()));
 
-        // Defaults of the legacy Monq.Core.BasicDotNetMicroservice pre-configured clients. They are
-        // applied before user-provided actions, so every default can be overridden per client.
+        // MONQ channel defaults, applied before user-provided actions so every default can be
+        // overridden per client.
         builder = builder.ConfigureChannel(static channelOptions =>
         {
             channelOptions.UnsafeUseInsecureChannelCallCredentials = true;
@@ -278,8 +277,8 @@ public static class GrpcClientExtensions
         if (options?.ChannelOptionsAction is not null)
             builder = builder.ConfigureChannel(options.ChannelOptionsAction);
 
-        // Interactive clients forward the incoming Authorization header (legacy pre-configured
-        // behavior); console clients forward it with a static token fallback.
+        // Interactive clients forward the incoming Authorization header; console clients forward
+        // it with a static token fallback.
         if (consoleClient)
             builder = builder.AddConsoleCallCredentials();
         else
@@ -319,7 +318,7 @@ public static class GrpcClientExtensions
             }
         });
 
-        // Event id (call context) propagation was enabled by the legacy pre-configured clients.
+        // Event id (call context) propagation links downstream gRPC calls to the request event.
         builder = builder.EnableCallContextPropagation(static propagationOptions =>
             propagationOptions.SuppressContextNotFoundErrors = true);
 

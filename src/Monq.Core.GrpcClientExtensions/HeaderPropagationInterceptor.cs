@@ -6,8 +6,7 @@ namespace Monq.Core.GrpcClientExtensions;
 
 /// <summary>
 /// Propagates <c>X-Smon-Userspace-Id</c> and <c>Accept-Language</c> headers from the current HTTP
-/// request to the metadata of outgoing gRPC calls, matching the behavior of the legacy
-/// pre-configured clients in Monq.Core.BasicDotNetMicroservice. Headers explicitly set on the
+/// request to the metadata of outgoing gRPC calls. Headers explicitly set on the
 /// call take precedence. Outside of an HTTP request (background or console execution) the
 /// interceptor is a no-op.
 /// </summary>
