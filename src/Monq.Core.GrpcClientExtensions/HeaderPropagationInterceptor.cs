@@ -11,7 +11,7 @@ namespace Monq.Core.GrpcClientExtensions;
 /// call take precedence. Outside of an HTTP request (background or console execution) the
 /// interceptor is a no-op.
 /// </summary>
-public sealed class MonqHeaderPropagationInterceptor : Interceptor
+public sealed class HeaderPropagationInterceptor : Interceptor
 {
     /// <summary>
     /// Header carrying the current userspace identifier.
@@ -29,7 +29,7 @@ public sealed class MonqHeaderPropagationInterceptor : Interceptor
     /// Creates the interceptor. <paramref name="httpContextAccessor" /> may be <see langword="null" />
     /// in hosts that do not serve HTTP requests.
     /// </summary>
-    public MonqHeaderPropagationInterceptor(IHttpContextAccessor? httpContextAccessor)
+    public HeaderPropagationInterceptor(IHttpContextAccessor? httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
     }

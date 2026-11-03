@@ -333,7 +333,7 @@ public class MonqGrpcClientTests
         httpContext.Request.Headers["X-Smon-Userspace-Id"] = "42";
         httpContext.Request.Headers["Accept-Language"] = "ru-RU";
 
-        var interceptor = new MonqHeaderPropagationInterceptor(
+        var interceptor = new HeaderPropagationInterceptor(
             new HttpContextAccessor { HttpContext = httpContext });
 
         var headers = InterceptUnary(interceptor, new CallOptions());
@@ -348,7 +348,7 @@ public class MonqGrpcClientTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Headers["X-Smon-Userspace-Id"] = "42";
 
-        var interceptor = new MonqHeaderPropagationInterceptor(
+        var interceptor = new HeaderPropagationInterceptor(
             new HttpContextAccessor { HttpContext = httpContext });
 
         var callOptions = new CallOptions().WithHeaders(new Metadata { { "x-smon-userspace-id", "7" } });
@@ -363,14 +363,14 @@ public class MonqGrpcClientTests
     [Fact]
     public void HeaderPropagation_NoHttpContextLeavesCallUntouched()
     {
-        var interceptor = new MonqHeaderPropagationInterceptor(httpContextAccessor: null);
+        var interceptor = new HeaderPropagationInterceptor(httpContextAccessor: null);
 
         var headers = InterceptUnary(interceptor, new CallOptions());
 
         Assert.Null(headers);
     }
 
-    static Metadata? InterceptUnary(MonqHeaderPropagationInterceptor interceptor, CallOptions callOptions)
+    static Metadata? InterceptUnary(HeaderPropagationInterceptor interceptor, CallOptions callOptions)
     {
         var marshaller = new Marshaller<string>(
             value => System.Text.Encoding.UTF8.GetBytes(value),

@@ -80,7 +80,7 @@ Every registered client also receives the defaults of the legacy pre-configured 
 `Monq.Core.BasicDotNetMicroservice`:
 
 - propagation of the `X-Smon-Userspace-Id` and `Accept-Language` headers from the current HTTP
-  request to the outgoing gRPC metadata (`MonqHeaderPropagationInterceptor`);
+  request to the outgoing gRPC metadata (`HeaderPropagationInterceptor`);
 - `MaxReceiveMessageSize` = 51 MB and `UnsafeUseInsecureChannelCallCredentials` = `true`;
 - call context (event id) propagation (`EnableCallContextPropagation`);
 - `Authorization` forwarding from the current HTTP request — interactive clients forward it as is,

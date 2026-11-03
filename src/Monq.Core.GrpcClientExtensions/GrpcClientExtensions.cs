@@ -265,7 +265,7 @@ public static class GrpcClientExtensions
         // register through this library directly must keep receiving it, otherwise services like
         // MyLimits reject the call with "Header x-smon-userspace-id not defined".
         builder = builder.AddInterceptor(static provider =>
-            new MonqHeaderPropagationInterceptor(provider.GetService<IHttpContextAccessor>()));
+            new HeaderPropagationInterceptor(provider.GetService<IHttpContextAccessor>()));
 
         // Defaults of the legacy Monq.Core.BasicDotNetMicroservice pre-configured clients. They are
         // applied before user-provided actions, so every default can be overridden per client.
@@ -377,7 +377,7 @@ public static class GrpcClientExtensions
     }
 }
 
-static class MonqGrpcClientConsoleCredentialsExtensions
+static class GrpcClientConsoleCredentialsExtensions
 {
     /// <summary>
     /// Forwards the incoming <c>Authorization</c> header; when there is no HTTP context, obtains
