@@ -26,7 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// request (with a static token fallback for console clients). Channel defaults are applied before
 /// user-provided actions, so every default can be overridden through <see cref="GrpcClientOptions"/>.
 /// </summary>
-public static class MonqGrpcClientServiceCollectionExtensions
+public static class GrpcClientExtensions
 {
     /// <summary>
     /// Adds a gRPC client whose address is resolved by application name on the first client creation.
