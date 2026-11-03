@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Monq.Core.GrpcClientExtensions;
 using Monq.Core.HttpClientExtensions;
 using Monq.Core.MicroserviceAddressing.Addressing;
-using Monq.Core.MicroserviceAddressing.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
@@ -22,7 +21,10 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// credentials, a 51 MB receive limit, call context (event id) propagation, and
 /// <c>Authorization</c> forwarding from the current HTTP request (with a static token fallback
 /// for console clients). Defaults are applied before user-provided actions, so every default can
-/// be overridden through <see cref="GrpcClientOptions"/>.
+/// be overridden through <see cref="GrpcClientOptions"/>. Name-based registration requires
+/// Monq.Core.MicroserviceAddressing to be configured on the host
+/// (<c>AddMicroserviceAddressing</c> or the Monq.Core.BasicDotNetMicroservice host wiring);
+/// fixed-address overloads work without it.
 /// </summary>
 public static class GrpcClientExtensions
 {
@@ -215,26 +217,27 @@ public static class GrpcClientExtensions
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string? name,
-        Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,        GrpcClientOptions? options,
+        Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,
+        GrpcClientOptions? options,
         bool consoleClient)
         where TClient : class =>
         services.AddMicroserviceGrpcClientCore<TClient>(
             name,
             provider => ResolveAddress(provider, settingsFactory(provider)),
-            options,            consoleClient);
+            options,
+            consoleClient);
 
     static IHttpClientBuilder AddMicroserviceGrpcClientCore<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string? name,
         Func<IServiceProvider, ResolvedMicroserviceAddress> addressFactory,
-        GrpcClientOptions? options,        bool consoleClient)
+        GrpcClientOptions? options,
+        bool consoleClient)
         where TClient : class
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(addressFactory);
-
-        services.AddMicroserviceAddressing();
 
         // Registered at registration time (before the provider is built) for every client:
         // name-based addresses are only known to use Service Discovery at resolution time, and
@@ -332,13 +335,18 @@ public static class GrpcClientExtensions
     {
         ArgumentNullException.ThrowIfNull(settings.ApplicationName);
 
-        return provider
-            .GetRequiredService<IMicroserviceAddressProvider>()
-            .Resolve(
-                settings.ApplicationName,
-                MicroserviceProtocol.Grpc,
-                settings.Port,
-                settings.AddressResolver);
+        var addressProvider = provider.GetService<IMicroserviceAddressProvider>()
+            ?? throw new InvalidOperationException(
+                $"Monq.Core.MicroserviceAddressing is not configured on this host, so the gRPC address " +
+                $"'{settings.ApplicationName}' cannot be resolved. Call services.AddMicroserviceAddressing() " +
+                "(optionally with UseMicroserviceAddressResolver) or use the " +
+                "Monq.Core.BasicDotNetMicroservice host wiring.");
+
+        return addressProvider.Resolve(
+            settings.ApplicationName,
+            MicroserviceProtocol.Grpc,
+            settings.Port,
+            settings.AddressResolver);
     }
 
     static bool UsesServiceDiscovery(ResolvedMicroserviceAddress resolvedAddress) =>

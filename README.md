@@ -20,6 +20,10 @@ duplicate:
 
 ## Quick start
 
+Name-based registration requires `AddMicroserviceAddressing()` on the host (the
+Monq.Core.BasicDotNetMicroservice wiring registers it automatically); when it is missing, the
+first client creation throws with a message naming the fix. Fixed-address overloads work without it.
+
 ```csharp
 builder.Services.AddMicroserviceAddressing();
 builder.Host.UseGrpcMicroserviceAddressResolver(new KubernetesServiceDiscoveryAddressResolver());

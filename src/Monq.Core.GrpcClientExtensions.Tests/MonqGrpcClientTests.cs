@@ -23,6 +23,22 @@ public class MonqGrpcClientTests
     static Uri HttpAddress => new("http://sample-api-service.integration.svc.cluster.local:5006");
 
     [Fact]
+    public void AddMicroserviceGrpcClient_ThrowsWhenAddressingNotConfigured()
+    {
+        var services = new ServiceCollection();
+        services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, applicationName);
+
+        using var provider = services.BuildServiceProvider();
+        var clientFactory = provider.GetRequiredService<GrpcClientFactory>();
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => clientFactory.CreateClient<TestServiceClient>(clientName));
+
+        Assert.Contains("Monq.Core.MicroserviceAddressing is not configured", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(applicationName, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AddMicroserviceGrpcClient_ResolvesAddressLazilyOnFirstCreate()
     {
         var addressProvider = CreateAddressProvider(DnsAddress, EndpointResolutionMode.ServiceDiscovery);
