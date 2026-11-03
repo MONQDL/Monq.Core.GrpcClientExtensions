@@ -5,14 +5,12 @@ using Grpc.Net.Client.Configuration;
 using Grpc.Net.ClientFactory;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using Monq.Core.GrpcClientExtensions;
 using Monq.Core.HttpClientExtensions;
 using Monq.Core.MicroserviceAddressing.Addressing;
 using Monq.Core.MicroserviceAddressing.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using System.Net.Http.Headers;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -282,14 +280,14 @@ public static class GrpcClientExtensions
         if (consoleClient)
             builder = builder.AddConsoleCallCredentials();
         else
-            builder = builder.AddCallCredentials(static (context, metadata, provider) =>
+            builder = builder.AddCallCredentials(static (_, metadata, provider) =>
             {
                 var httpContext = provider.GetService<IHttpContextAccessor>()?.HttpContext;
 
                 if (httpContext?.Request.Headers
-                        .TryGetValue(HttpRequestHeader.Authorization.ToString(), out var token) == true
+                        .TryGetValue(nameof(HttpRequestHeader.Authorization), out var token) == true
                     && !string.IsNullOrEmpty(token))
-                    metadata.Add(HttpRequestHeader.Authorization.ToString(), token!);
+                    metadata.Add(nameof(HttpRequestHeader.Authorization), token!);
 
                 return Task.CompletedTask;
             });

@@ -21,10 +21,10 @@ static class GrpcClientConsoleCredentialsExtensions
                 var httpContextAccessor = provider.GetService<IHttpContextAccessor>();
 
                 if (httpContextAccessor?.HttpContext?.Request.Headers
-                        .TryGetValue(HttpRequestHeader.Authorization.ToString(), out var token) == true
+                        .TryGetValue(nameof(HttpRequestHeader.Authorization), out var token) == true
                     && !string.IsNullOrEmpty(token))
                 {
-                    metadata.Add(HttpRequestHeader.Authorization.ToString(), token!);
+                    metadata.Add(nameof(HttpRequestHeader.Authorization), token!);
                     return;
                 }
 
@@ -40,6 +40,6 @@ static class GrpcClientConsoleCredentialsExtensions
 
                 const string scheme = "Bearer";
                 var authorizationHeaderValue = new AuthenticationHeaderValue(scheme, tokenResponse.AccessToken);
-                metadata.Add(HttpRequestHeader.Authorization.ToString(), authorizationHeaderValue.ToString());
+                metadata.Add(nameof(HttpRequestHeader.Authorization), authorizationHeaderValue.ToString());
             });
 }
