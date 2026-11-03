@@ -22,9 +22,8 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <c>Authorization</c> forwarding from the current HTTP request (with a static token fallback
 /// for console clients). Defaults are applied before user-provided actions, so every default can
 /// be overridden through <see cref="GrpcClientOptions"/>. Name-based registration requires
-/// Monq.Core.MicroserviceAddressing to be configured on the host
-/// (<c>AddMicroserviceAddressing</c> or the Monq.Core.BasicDotNetMicroservice host wiring);
-/// fixed-address overloads work without it.
+/// Monq.Core.MicroserviceAddressing to be configured on the host with
+/// <c>AddMicroserviceAddressing</c>; fixed-address overloads work without it.
 /// </summary>
 public static class GrpcClientExtensions
 {
@@ -339,8 +338,7 @@ public static class GrpcClientExtensions
             ?? throw new InvalidOperationException(
                 $"Monq.Core.MicroserviceAddressing is not configured on this host, so the gRPC address " +
                 $"'{settings.ApplicationName}' cannot be resolved. Call services.AddMicroserviceAddressing() " +
-                "(optionally with UseMicroserviceAddressResolver) or use the " +
-                "Monq.Core.BasicDotNetMicroservice host wiring.");
+                "and configure a microservice address resolver on the host.");
 
         return addressProvider.Resolve(
             settings.ApplicationName,

@@ -7,10 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
-using Monq.Core.GrpcClientExtensions;
 using Monq.Core.HttpClientExtensions;
 using Monq.Core.MicroserviceAddressing.Addressing;
-using Monq.Core.MicroserviceAddressing.DependencyInjection;
 
 namespace Monq.Core.GrpcClientExtensions.Tests;
 
