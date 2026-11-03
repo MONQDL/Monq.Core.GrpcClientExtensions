@@ -20,7 +20,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// Extension methods for registering gRPC clients that resolve their addresses through
 /// <see cref="IMicroserviceAddressProvider"/>. Registration applies the behavior of the legacy
 /// pre-configured clients from Monq.Core.BasicDotNetMicroservice: scheme-aware channel credentials,
-/// round-robin balancing for addresses resolved in Service Discovery mode, userspace and
+/// round-robin balancing for load-balanced (Service Discovery / <c>dns</c>) addresses, userspace and
 /// culture header propagation, insecure-channel call credentials, a 51 MB receive limit, call
 /// context (event id) propagation, and <c>Authorization</c> forwarding from the current HTTP
 /// request (with a static token fallback for console clients). Channel defaults are applied before
@@ -80,8 +80,7 @@ public static class MonqGrpcClientServiceCollectionExtensions
 
     /// <summary>
     /// Adds a gRPC client with a fixed address. The resolvers are not consulted; use it for local
-    /// debugging. A <c>dns</c> scheme still enables DNS resolution; round-robin requires passing
-    /// <see cref="EndpointResolutionMode.ServiceDiscovery"/> explicitly.
+    /// debugging. A <c>dns</c> scheme still enables DNS resolution and round-robin balancing.
     /// </summary>
     public static IHttpClientBuilder AddMonqGrpcClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
@@ -303,11 +302,11 @@ public static class MonqGrpcClientServiceCollectionExtensions
 
             ConfigureChannelCredentials(channelOptions, resolvedAddress.Address);
 
-            // Round-robin is enabled only when the resolver reports Service Discovery mode: a
-            // headless Service exposes pods as A-records and grpc-dotnet defaults to pick_first,
-            // which would use only the first one. Direct (ClusterIP) addresses keep kube-proxy
-            // balancing, and a manually supplied dns:/// address uses pick_first unless it is
-            // registered with EndpointResolutionMode.ServiceDiscovery explicitly.
+            // Round-robin follows the Monq.Core.MicroserviceAddressing contract for gRPC clients
+            // (IMicroserviceAddressProvider): load balancing is enabled for Service Discovery mode
+            // and for any dns-scheme address. A headless Service exposes pods as A-records and
+            // grpc-dotnet defaults to pick_first, which would use only the first one. Direct
+            // (ClusterIP) addresses keep kube-proxy balancing, so no service config is applied.
             if (UsesServiceDiscovery(resolvedAddress))
             {
                 channelOptions.ServiceConfig = new ServiceConfig
@@ -346,7 +345,8 @@ public static class MonqGrpcClientServiceCollectionExtensions
     }
 
     static bool UsesServiceDiscovery(ResolvedMicroserviceAddress resolvedAddress) =>
-        resolvedAddress.ResolutionMode == EndpointResolutionMode.ServiceDiscovery;
+        resolvedAddress.ResolutionMode == EndpointResolutionMode.ServiceDiscovery
+        || resolvedAddress.Address.Scheme.Equals("dns", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// grpc-dotnet requires explicit channel credentials for every address scheme other than

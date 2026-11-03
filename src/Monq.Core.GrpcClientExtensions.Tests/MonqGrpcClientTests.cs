@@ -87,12 +87,13 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMonqGrpcClient_NoRoundRobinForDnsSchemeInDirectMode()
+    public void AddMonqGrpcClient_EnablesRoundRobinForDnsSchemeInDirectMode()
     {
         var channelOptions = ConfigureChannel(
             services => services.AddMonqGrpcClient<TestServiceClient>(clientName, DnsAddress));
 
-        Assert.Null(channelOptions.ServiceConfig);
+        Assert.Contains(channelOptions.ServiceConfig?.LoadBalancingConfigs ?? [],
+            config => config is RoundRobinConfig);
         Assert.Same(ChannelCredentials.Insecure, channelOptions.Credentials);
     }
 
@@ -255,7 +256,8 @@ public class MonqGrpcClientTests
 
         Assert.Same(ChannelCredentials.Insecure, channelOptions.Credentials);
         Assert.True(channelOptions.UnsafeUseInsecureChannelCallCredentials);
-        Assert.Null(channelOptions.ServiceConfig);
+        Assert.Contains(channelOptions.ServiceConfig?.LoadBalancingConfigs ?? [],
+            config => config is RoundRobinConfig);
     }
 
     [Fact]
