@@ -25,26 +25,26 @@ builder.Services.AddMicroserviceAddressing();
 builder.Host.UseGrpcMicroserviceAddressResolver(new KubernetesServiceDiscoveryAddressResolver());
 
 // Address resolved by application name on the first client creation.
-builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>("sample-api-service");
+builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>("sample-api-service");
 
 // Named registration for several clients of the same type.
-builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
+builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>(
     name: "secondary",
     applicationName: "sample-api-service",
     port: 5006,
     addressResolver: new FixedMicroserviceAddressResolver(new Uri("http://localhost:5006")));
 
 // Settings resolved lazily — for composed libraries.
-builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
+builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>(
     "sample",
     provider => new GrpcClientAddressSettings("sample-api-service", 5006));
 
 // Fixed address for local debugging.
-builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
+builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>(
     new Uri("http://localhost:5006"));
 
 // Additional client/channel configuration via the options object.
-builder.Services.AddMonqGrpcClient<SampleService.SampleServiceClient>(
+builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>(
     "sample-api-service",
     options: new GrpcClientOptions
     {
@@ -56,14 +56,14 @@ Background and console clients use the console variants and receive call credent
 static token fallback:
 
 ```csharp
-builder.Services.AddMonqGrpcConsoleClient<SampleService.SampleServiceClient>(
+builder.Services.AddMicroserviceGrpcConsoleClient<SampleService.SampleServiceClient>(
     "sample-api-service");
 ```
 
 ## Service discovery options
 
 ```csharp
-builder.Services.ConfigureMonqGrpcServiceDiscovery(options =>
+builder.Services.ConfigureGrpcServiceDiscovery(options =>
     options.DnsRefreshInterval = TimeSpan.FromSeconds(15));
 ```
 

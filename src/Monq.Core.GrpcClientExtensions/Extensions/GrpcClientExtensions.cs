@@ -31,7 +31,7 @@ public static class GrpcClientExtensions
     /// <summary>
     /// Adds a gRPC client whose address is resolved by application name on the first client creation.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string applicationName,
@@ -39,7 +39,7 @@ public static class GrpcClientExtensions
         IMicroserviceAddressResolver? addressResolver = null,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name: null,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
@@ -49,7 +49,7 @@ public static class GrpcClientExtensions
     /// Adds a named gRPC client whose address is resolved by application name on the first client
     /// creation. Use named registrations when a service registers several clients of the same type.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string name,
@@ -58,7 +58,7 @@ public static class GrpcClientExtensions
         IMicroserviceAddressResolver? addressResolver = null,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
@@ -68,28 +68,28 @@ public static class GrpcClientExtensions
     /// Adds a named gRPC client for composed libraries: the settings are resolved lazily from the
     /// service provider, so registration order does not matter.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string name,
         Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name, settingsFactory, options, consoleClient: false);
 
     /// <summary>
     /// Adds a gRPC client with a fixed address. The resolvers are not consulted; use it for local
     /// debugging. A <c>dns</c> scheme still enables DNS resolution and round-robin balancing.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name: null,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
@@ -98,7 +98,7 @@ public static class GrpcClientExtensions
     /// <summary>
     /// Adds a named gRPC client with a fixed address. See the overload without a name.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string name,
@@ -106,7 +106,7 @@ public static class GrpcClientExtensions
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
@@ -117,7 +117,7 @@ public static class GrpcClientExtensions
     /// first client creation. The client forwards the incoming <c>Authorization</c> header and
     /// falls back to a static token via <see cref="RestHttpClient"/> when there is no HTTP context.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcConsoleClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcConsoleClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string applicationName,
@@ -125,7 +125,7 @@ public static class GrpcClientExtensions
         IMicroserviceAddressResolver? addressResolver = null,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name: null,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
@@ -134,7 +134,7 @@ public static class GrpcClientExtensions
     /// <summary>
     /// Adds a named console/background gRPC client. See the overload without a name.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcConsoleClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcConsoleClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string name,
@@ -143,7 +143,7 @@ public static class GrpcClientExtensions
         IMicroserviceAddressResolver? addressResolver = null,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name,
             _ => new GrpcClientAddressSettings(applicationName, port, addressResolver),
             options,
@@ -153,28 +153,28 @@ public static class GrpcClientExtensions
     /// Adds a named console/background gRPC client for composed libraries: the settings are resolved
     /// lazily from the service provider. See the console overload by application name.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcConsoleClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcConsoleClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string name,
         Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name, settingsFactory, options, consoleClient: true);
 
     /// <summary>
     /// Adds a console/background gRPC client with a fixed address. See the console overload
     /// by application name for the credentials behavior.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcConsoleClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcConsoleClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         Uri address,
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name: null,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
@@ -183,7 +183,7 @@ public static class GrpcClientExtensions
     /// <summary>
     /// Adds a named console/background gRPC client with a fixed address.
     /// </summary>
-    public static IHttpClientBuilder AddMonqGrpcConsoleClient<
+    public static IHttpClientBuilder AddMicroserviceGrpcConsoleClient<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string name,
@@ -191,7 +191,7 @@ public static class GrpcClientExtensions
         EndpointResolutionMode mode = EndpointResolutionMode.Direct,
         GrpcClientOptions? options = null)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name,
             _ => new ResolvedMicroserviceAddress(address, mode),
             options,
@@ -201,7 +201,7 @@ public static class GrpcClientExtensions
     /// Configures the shared DNS refresh interval used by all gRPC clients resolved in
     /// Service Discovery mode.
     /// </summary>
-    public static IServiceCollection ConfigureMonqGrpcServiceDiscovery(
+    public static IServiceCollection ConfigureGrpcServiceDiscovery(
         this IServiceCollection services,
         Action<GrpcServiceDiscoveryOptions> configureOptions)
     {
@@ -213,19 +213,19 @@ public static class GrpcClientExtensions
         return services;
     }
 
-    static IHttpClientBuilder AddMonqGrpcClientCore<
+    static IHttpClientBuilder AddMicroserviceGrpcClientCore<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string? name,
         Func<IServiceProvider, GrpcClientAddressSettings> settingsFactory,        GrpcClientOptions? options,
         bool consoleClient)
         where TClient : class =>
-        services.AddMonqGrpcClientCore<TClient>(
+        services.AddMicroserviceGrpcClientCore<TClient>(
             name,
             provider => ResolveAddress(provider, settingsFactory(provider)),
             options,            consoleClient);
 
-    static IHttpClientBuilder AddMonqGrpcClientCore<
+    static IHttpClientBuilder AddMicroserviceGrpcClientCore<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TClient>(
         this IServiceCollection services,
         string? name,
@@ -374,43 +374,4 @@ public static class GrpcClientExtensions
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<ResolverFactory, ConfiguredDnsResolverFactory>());
     }
-}
-
-static class GrpcClientConsoleCredentialsExtensions
-{
-    /// <summary>
-    /// Forwards the incoming <c>Authorization</c> header; when there is no HTTP context, obtains
-    /// a token through <see cref="RestHttpClient"/> (the static authentication endpoint must be
-    /// configured on the host).
-    /// </summary>
-    public static IHttpClientBuilder AddConsoleCallCredentials(this IHttpClientBuilder builder) =>
-        builder
-            .ConfigureChannel(channelOptions =>
-                channelOptions.UnsafeUseInsecureChannelCallCredentials = true)
-            .AddCallCredentials(async (context, metadata, provider) =>
-            {
-                var httpContextAccessor = provider.GetService<IHttpContextAccessor>();
-
-                if (httpContextAccessor?.HttpContext?.Request.Headers
-                        .TryGetValue(HttpRequestHeader.Authorization.ToString(), out var token) == true
-                    && !string.IsNullOrEmpty(token))
-                {
-                    metadata.Add(HttpRequestHeader.Authorization.ToString(), token!);
-                    return;
-                }
-
-                var restHttpClient = provider.GetService<RestHttpClient>();
-
-                if (restHttpClient is null)
-                    return;
-
-                var tokenResponse = await restHttpClient.GetAccessToken(false);
-
-                if (tokenResponse is null)
-                    return;
-
-                const string scheme = "Bearer";
-                var authorizationHeaderValue = new AuthenticationHeaderValue(scheme, tokenResponse.AccessToken);
-                metadata.Add(HttpRequestHeader.Authorization.ToString(), authorizationHeaderValue.ToString());
-            });
 }
