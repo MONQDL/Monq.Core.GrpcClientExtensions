@@ -8,8 +8,9 @@ duplicate:
 - scheme-aware channel credentials — grpc-dotnet requires explicit credentials for any address
   scheme other than `http`/`https` (`dns:///` from Service Discovery, but also `ipv4:///`,
   `unix:/` and custom resolver schemes), so non-http addresses get `ChannelCredentials.Insecure`;
-- round-robin balancing — enabled exactly for load-balanced addresses (resolution mode
-  `ServiceDiscovery` or the `dns` scheme); Direct (ClusterIP) addresses keep kube-proxy balancing;
+- round-robin balancing — enabled only when the address is resolved in resolution mode
+  `ServiceDiscovery` (headless Service); Direct (ClusterIP) addresses keep kube-proxy balancing,
+  a `dns:///` address in mode `Direct` uses the default `pick_first`;
 - client-side service discovery — a DNS resolver with a configurable refresh interval shared by
   all clients;
 - static authorization fallback for background/console clients — the incoming `Authorization`
@@ -70,9 +71,9 @@ builder.Services.ConfigureMonqGrpcServiceDiscovery(options =>
 | Address | Credentials | Load balancing |
 |---|---|---|
 | `http`/`https` (Direct, ClusterIP) | inferred from scheme | kube-proxy (no service config) |
-| `dns:///` (Service Discovery, headless Service) | `Insecure` | round-robin over resolved pods |
+| `dns:///` (Service Discovery mode, headless Service) | `Insecure` | round-robin over resolved pods |
 | `ipv4:///`, `unix:/`, custom schemes | `Insecure` | per resolver semantics |
-| Fixed URI (`Uri` overloads) | scheme-aware | round-robin only for the `dns` scheme |
+| Fixed URI (`Uri` overloads) | scheme-aware | round-robin only with explicit `ServiceDiscovery` mode |
 
 Every registered client also receives the defaults of the legacy pre-configured clients from
 `Monq.Core.BasicDotNetMicroservice`:
