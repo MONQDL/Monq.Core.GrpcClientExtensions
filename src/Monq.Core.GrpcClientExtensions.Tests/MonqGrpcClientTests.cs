@@ -21,10 +21,10 @@ public class MonqGrpcClientTests
     static Uri HttpAddress => new("http://sample-api-service.integration.svc.cluster.local:5006");
 
     [Fact]
-    public void AddMicroserviceGrpcClient_ThrowsWhenAddressingNotConfigured()
+    public void AddGrpcPreConfiguredClient_ThrowsWhenAddressingNotConfigured()
     {
         var services = new ServiceCollection();
-        services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, applicationName);
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(clientName, applicationName);
 
         using var provider = services.BuildServiceProvider();
         var clientFactory = provider.GetRequiredService<GrpcClientFactory>();
@@ -37,13 +37,13 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_ResolvesAddressLazilyOnFirstCreate()
+    public void AddGrpcPreConfiguredClient_ResolvesAddressLazilyOnFirstCreate()
     {
         var addressProvider = CreateAddressProvider(DnsAddress, EndpointResolutionMode.ServiceDiscovery);
 
         var services = new ServiceCollection();
         services.AddSingleton(addressProvider.Object);
-        services.AddMicroserviceGrpcClient<TestServiceClient>(
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(
             clientName, applicationName, port: 5006, addressResolver: null);
 
         using var provider = services.BuildServiceProvider();
@@ -63,32 +63,32 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_SetsInsecureCredentialsForNonHttpScheme()
+    public void AddGrpcPreConfiguredClient_SetsInsecureCredentialsForNonHttpScheme()
     {
         var channelOptions = ConfigureChannel(
-            services => services.AddMicroserviceGrpcClient<TestServiceClient>(
+            services => services.AddGrpcPreConfiguredClient<TestServiceClient>(
                 clientName, new Uri("ipv4:///10.42.0.7:5006")));
 
         Assert.Same(ChannelCredentials.Insecure, channelOptions.Credentials);
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_DoesNotOverrideCredentialsForHttpScheme()
+    public void AddGrpcPreConfiguredClient_DoesNotOverrideCredentialsForHttpScheme()
     {
         var channelOptions = ConfigureChannel(
-            services => services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, HttpAddress));
+            services => services.AddGrpcPreConfiguredClient<TestServiceClient>(clientName, HttpAddress));
 
         Assert.Null(channelOptions.Credentials);
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_EnablesRoundRobinForServiceDiscoveryMode()
+    public void AddGrpcPreConfiguredClient_EnablesRoundRobinForServiceDiscoveryMode()
     {
         var services = new ServiceCollection();
         var addressProvider = CreateAddressProvider(DnsAddress, EndpointResolutionMode.ServiceDiscovery);
         services.AddSingleton(addressProvider.Object);
 
-        services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, applicationName);
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(clientName, applicationName);
 
         var channelOptions = CreateChannelOptions(services, clientName);
 
@@ -101,10 +101,10 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_EnablesRoundRobinForDnsSchemeInDirectMode()
+    public void AddGrpcPreConfiguredClient_EnablesRoundRobinForDnsSchemeInDirectMode()
     {
         var channelOptions = ConfigureChannel(
-            services => services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, DnsAddress));
+            services => services.AddGrpcPreConfiguredClient<TestServiceClient>(clientName, DnsAddress));
 
         Assert.Contains(channelOptions.ServiceConfig?.LoadBalancingConfigs ?? [],
             config => config is RoundRobinConfig);
@@ -112,29 +112,29 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_NoServiceConfigForDirectHttpAddress()
+    public void AddGrpcPreConfiguredClient_NoServiceConfigForDirectHttpAddress()
     {
         var channelOptions = ConfigureChannel(
-            services => services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, HttpAddress));
+            services => services.AddGrpcPreConfiguredClient<TestServiceClient>(clientName, HttpAddress));
 
         Assert.Null(channelOptions.ServiceConfig);
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_RegistersDnsResolverFactoryOnceForSeveralClients()
+    public void AddGrpcPreConfiguredClient_RegistersDnsResolverFactoryOnceForSeveralClients()
     {
         var services = new ServiceCollection();
         services.AddSingleton(CreateAddressProvider(DnsAddress).Object);
 
-        services.AddMicroserviceGrpcClient<TestServiceClient>("client-1", applicationName);
-        services.AddMicroserviceGrpcClient<TestServiceClient>("client-2", applicationName);
+        services.AddGrpcPreConfiguredClient<TestServiceClient>("client-1", applicationName);
+        services.AddGrpcPreConfiguredClient<TestServiceClient>("client-2", applicationName);
 
         Assert.Equal(1, services.Count(descriptor =>
             descriptor.ServiceType == typeof(Grpc.Net.Client.Balancer.ResolverFactory)));
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_SettingsFactoryResolverTakesPrecedence()
+    public void AddGrpcPreConfiguredClient_SettingsFactoryResolverTakesPrecedence()
     {
         var customResolver = new FixedMicroserviceAddressResolver(HttpAddress);
         var addressProvider = new Mock<IMicroserviceAddressProvider>();
@@ -145,7 +145,7 @@ public class MonqGrpcClientTests
 
         var services = new ServiceCollection();
         services.AddSingleton(addressProvider.Object);
-        services.AddMicroserviceGrpcClient<TestServiceClient>(
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(
             clientName,
             _ => new GrpcClientAddressSettings(applicationName, AddressResolver: customResolver));
 
@@ -156,7 +156,7 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_FixedAddressDoesNotConsultAddressProvider()
+    public void AddGrpcPreConfiguredClient_FixedAddressDoesNotConsultAddressProvider()
     {
         var addressProvider = new Mock<IMicroserviceAddressProvider>();
 
@@ -164,7 +164,7 @@ public class MonqGrpcClientTests
             services =>
             {
                 services.AddSingleton(addressProvider.Object);
-                services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, HttpAddress);
+                services.AddGrpcPreConfiguredClient<TestServiceClient>(clientName, HttpAddress);
             });
 
         Assert.Null(channelOptions.Credentials);
@@ -175,7 +175,7 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_AppliesUserChannelOptionsWithAutomaticDefaults()
+    public void AddGrpcPreConfiguredClient_AppliesUserChannelOptionsWithAutomaticDefaults()
     {
         var options = new GrpcClientOptions
         {
@@ -183,7 +183,7 @@ public class MonqGrpcClientTests
         };
 
         var channelOptions = ConfigureChannel(
-            services => services.AddMicroserviceGrpcClient<TestServiceClient>(
+            services => services.AddGrpcPreConfiguredClient<TestServiceClient>(
                 clientName, DnsAddress, options: options));
 
         Assert.Equal(1024, channelOptions.MaxReceiveMessageSize);
@@ -192,12 +192,12 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcConsoleClient_RegistersRestHttpClientAndInsecureCallCredentials()
+    public void AddGrpcPreConfiguredConsoleClient_RegistersRestHttpClientAndInsecureCallCredentials()
     {
         var services = new ServiceCollection();
         services.AddSingleton(CreateAddressProvider(HttpAddress).Object);
 
-        services.AddMicroserviceGrpcConsoleClient<TestServiceClient>(clientName, applicationName);
+        services.AddGrpcPreConfiguredConsoleClient<TestServiceClient>(clientName, applicationName);
 
         Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(RestHttpClient));
 
@@ -207,13 +207,13 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_WithoutName_ResolvesTypedClient()
+    public void AddGrpcPreConfiguredClient_WithoutName_ResolvesTypedClient()
     {
         var addressProvider = CreateAddressProvider(HttpAddress);
 
         var services = new ServiceCollection();
         services.AddSingleton(addressProvider.Object);
-        services.AddMicroserviceGrpcClient<TestServiceClient>(applicationName, port: 5006);
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(applicationName, port: 5006);
 
         using var provider = services.BuildServiceProvider();
         var clientFactory = provider.GetRequiredService<GrpcClientFactory>();
@@ -235,7 +235,7 @@ public class MonqGrpcClientTests
 
         services.ConfigureGrpcServiceDiscovery(
             options => options.DnsRefreshInterval = TimeSpan.FromSeconds(5));
-        services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, applicationName);
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(clientName, applicationName);
 
         using var provider = services.BuildServiceProvider();
 
@@ -252,7 +252,7 @@ public class MonqGrpcClientTests
 
         services.ConfigureGrpcServiceDiscovery(
             options => options.DnsRefreshInterval = TimeSpan.FromSeconds(-1));
-        services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, applicationName);
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(clientName, applicationName);
 
         using var provider = services.BuildServiceProvider();
 
@@ -261,10 +261,10 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcConsoleClient_FixedAddressAppliesCredentialsAndCallCredentials()
+    public void AddGrpcPreConfiguredConsoleClient_FixedAddressAppliesCredentialsAndCallCredentials()
     {
         var services = new ServiceCollection();
-        services.AddMicroserviceGrpcConsoleClient<TestServiceClient>(clientName, DnsAddress);
+        services.AddGrpcPreConfiguredConsoleClient<TestServiceClient>(clientName, DnsAddress);
 
         var channelOptions = CreateChannelOptions(services, clientName);
 
@@ -275,12 +275,12 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_AppliesPreConfiguredDefaultsAndOptionsObject()
+    public void AddGrpcPreConfiguredClient_AppliesPreConfiguredDefaultsAndOptionsObject()
     {
         var services = new ServiceCollection();
         services.AddSingleton(CreateAddressProvider(DnsAddress, EndpointResolutionMode.ServiceDiscovery).Object);
 
-        services.AddMicroserviceGrpcClient<TestServiceClient>(
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(
             clientName,
             applicationName,
             options: new GrpcClientOptions
@@ -295,12 +295,12 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_AppliesLegacyPreConfiguredDefaults()
+    public void AddGrpcPreConfiguredClient_AppliesLegacyPreConfiguredDefaults()
     {
         var services = new ServiceCollection();
         services.AddSingleton(CreateAddressProvider(HttpAddress).Object);
 
-        services.AddMicroserviceGrpcClient<TestServiceClient>(clientName, applicationName);
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(clientName, applicationName);
 
         Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IHttpContextAccessor));
 
@@ -321,12 +321,12 @@ public class MonqGrpcClientTests
     }
 
     [Fact]
-    public void AddMicroserviceGrpcClient_UserChannelOptionsOverrideDefaults()
+    public void AddGrpcPreConfiguredClient_UserChannelOptionsOverrideDefaults()
     {
         var services = new ServiceCollection();
         services.AddSingleton(CreateAddressProvider(HttpAddress).Object);
 
-        services.AddMicroserviceGrpcClient<TestServiceClient>(
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(
             clientName,
             applicationName,
             options: new GrpcClientOptions
@@ -338,6 +338,18 @@ public class MonqGrpcClientTests
 
         Assert.Equal(2048L, channelOptions.MaxReceiveMessageSize!.Value);
         Assert.True(channelOptions.UnsafeUseInsecureChannelCallCredentials);
+    }
+
+    [Fact]
+    public void AddGrpcPreConfiguredClient_RejectsRelativeAddress()
+    {
+        var services = new ServiceCollection();
+        var relativeAddress = new Uri("sample/path", UriKind.Relative);
+
+        Assert.Throws<ArgumentException>(
+            () => services.AddGrpcPreConfiguredClient<TestServiceClient>(relativeAddress));
+        Assert.Throws<ArgumentException>(
+            () => services.AddGrpcPreConfiguredConsoleClient<TestServiceClient>(relativeAddress));
     }
 
     [Fact]

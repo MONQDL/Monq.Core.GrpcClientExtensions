@@ -26,29 +26,29 @@ without it.
 
 ```csharp
 builder.Services.AddMicroserviceAddressing();
-builder.Host.UseGrpcMicroserviceAddressResolver(new KubernetesServiceDiscoveryAddressResolver());
+builder.Services.UseGrpcMicroserviceAddressResolver(new KubernetesServiceDiscoveryAddressResolver());
 
 // Address resolved by application name on the first client creation.
-builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>("sample-api-service");
+builder.Services.AddGrpcPreConfiguredClient<SampleService.SampleServiceClient>("sample-api-service");
 
 // Named registration for several clients of the same type.
-builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>(
+builder.Services.AddGrpcPreConfiguredClient<SampleService.SampleServiceClient>(
     name: "secondary",
     applicationName: "sample-api-service",
     port: 5006,
     addressResolver: new FixedMicroserviceAddressResolver(new Uri("http://localhost:5006")));
 
 // Settings resolved lazily — for composed libraries.
-builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>(
+builder.Services.AddGrpcPreConfiguredClient<SampleService.SampleServiceClient>(
     "sample",
     provider => new GrpcClientAddressSettings("sample-api-service", 5006));
 
 // Fixed address for local debugging.
-builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>(
+builder.Services.AddGrpcPreConfiguredClient<SampleService.SampleServiceClient>(
     new Uri("http://localhost:5006"));
 
 // Additional client/channel configuration via the options object.
-builder.Services.AddMicroserviceGrpcClient<SampleService.SampleServiceClient>(
+builder.Services.AddGrpcPreConfiguredClient<SampleService.SampleServiceClient>(
     "sample-api-service",
     options: new GrpcClientOptions
     {
@@ -60,7 +60,7 @@ Background and console clients use the console variants and receive call credent
 static token fallback:
 
 ```csharp
-builder.Services.AddMicroserviceGrpcConsoleClient<SampleService.SampleServiceClient>(
+builder.Services.AddGrpcPreConfiguredConsoleClient<SampleService.SampleServiceClient>(
     "sample-api-service");
 ```
 
