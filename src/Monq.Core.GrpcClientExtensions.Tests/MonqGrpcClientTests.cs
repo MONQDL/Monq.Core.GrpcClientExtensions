@@ -316,7 +316,32 @@ public class MonqGrpcClientTests
 
         Assert.True(channelOptions.UnsafeUseInsecureChannelCallCredentials);
         Assert.Equal(51 * 1024 * 1024, channelOptions.MaxReceiveMessageSize!.Value);
-        // Header propagation interceptor + call context (event id) propagation interceptor.
+        // Call context propagation (deadline/cancellation token) is opt-in, so only the
+        // header propagation interceptor is registered by default.
+        Assert.Equal(1, factoryOptions.InterceptorRegistrations.Count);
+    }
+
+    [Fact]
+    public void AddGrpcPreConfiguredClient_ContextPropagationIsOptIn()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(CreateAddressProvider(HttpAddress).Object);
+
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(
+            clientName,
+            applicationName,
+            options: new GrpcClientOptions
+            {
+                ContextPropagationOptionsAction = propagationOptions =>
+                    propagationOptions.SuppressContextNotFoundErrors = true,
+            });
+
+        using var provider = services.BuildServiceProvider();
+        var factoryOptions = provider
+            .GetRequiredService<IOptionsMonitor<GrpcClientFactoryOptions>>()
+            .Get(clientName);
+
+        // Header propagation interceptor + explicitly enabled call context propagation interceptor.
         Assert.Equal(2, factoryOptions.InterceptorRegistrations.Count);
     }
 

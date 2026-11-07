@@ -85,9 +85,12 @@ Every registered client also receives the MONQ defaults:
 - propagation of the `X-Smon-Userspace-Id` and `Accept-Language` headers from the current HTTP
   request to the outgoing gRPC metadata (`HeaderPropagationInterceptor`);
 - `MaxReceiveMessageSize` = 51 MB and `UnsafeUseInsecureChannelCallCredentials` = `true`;
-- call context (event id) propagation (`EnableCallContextPropagation`);
 - `Authorization` forwarding from the current HTTP request — interactive clients forward it as is,
   console clients additionally fall back to a static token via `RestHttpClient`.
+
+Call context propagation (deadline and cancellation token of the current server call) is **not** a
+default: enabling it unconditionally would leak the incoming caller's cancellation and deadline into
+every downstream call. Opt in per client via `GrpcClientOptions.ContextPropagationOptionsAction`.
 
 Defaults are applied before the actions of `GrpcClientOptions`, so each default can be overridden
 per client.

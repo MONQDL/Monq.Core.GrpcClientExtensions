@@ -260,6 +260,10 @@ public static class ServiceCollectionExtensions
         // is harmless for hosts that never resolve dns addresses.
         EnsureServiceDiscovery(services);
 
+        // HeaderPropagationInterceptor reads the current request through IHttpContextAccessor;
+        // previously the accessor was registered implicitly by EnableCallContextPropagation.
+        services.AddHttpContextAccessor();
+
         if (consoleClient)
             services.AddHttpClient<RestHttpClient>();
 
@@ -334,10 +338,9 @@ public static class ServiceCollectionExtensions
             }
         });
 
-        // Event id (call context) propagation links downstream gRPC calls to the request event.
-        builder = builder.EnableCallContextPropagation(static propagationOptions =>
-            propagationOptions.SuppressContextNotFoundErrors = true);
-
+        // Call context propagation (deadline and cancellation token of the current server call)
+        // is opt-in: enabling it unconditionally would let an incoming caller's cancellation and
+        // deadline leak into every downstream call. Set ContextPropagationOptionsAction to enable it.
         if (options?.ContextPropagationOptionsAction is not null)
             builder = builder.EnableCallContextPropagation(options.ContextPropagationOptionsAction);
 
