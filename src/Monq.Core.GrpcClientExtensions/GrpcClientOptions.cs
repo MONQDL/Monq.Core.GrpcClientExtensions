@@ -23,11 +23,20 @@ public sealed class GrpcClientOptions
     /// <summary>
     /// A delegate that is used to configure a <see cref="GrpcContextPropagationOptions"/>.
     /// Propagation copies the deadline and the cancellation token of the current server call
-    /// onto outgoing calls, so prefer <see langword="null"/> for clients that must not be
-    /// cancelled with the incoming request (for example background or technical lookups).
-    /// Consider setting <c>SuppressContextNotFoundErrors = true</c> for clients that are also
-    /// used outside of a gRPC request context.
+    /// onto outgoing calls. Applied after the default <c>SuppressContextNotFoundErrors = true</c>
+    /// on the same options instance, so properties it sets win; unset properties keep the default.
+    /// Ignored when <see cref="EnableContextPropagation"/> is <see langword="false"/>.
     /// </summary>
-    /// <value>If <see langword="null"/>, then call context propagation is disabled.</value>
     public Action<GrpcContextPropagationOptions>? ContextPropagationOptionsAction { get; set; }
+
+    /// <summary>
+    /// Enables call context propagation: outgoing calls inherit the deadline and cancellation token
+    /// of the current server call and are cancelled together with the incoming request. Matches the
+    /// Monq.Core.BasicDotNetMicroservice default. Set to <see langword="false"/> for technical
+    /// clients (configuration or reference-data lookups) that must survive the caller.
+    /// </summary>
+    /// <value>
+    /// The default <see langword="true"/> keeps propagation enabled; <see langword="false"/> disables it.
+    /// </value>
+    public bool EnableContextPropagation { get; set; } = true;
 }

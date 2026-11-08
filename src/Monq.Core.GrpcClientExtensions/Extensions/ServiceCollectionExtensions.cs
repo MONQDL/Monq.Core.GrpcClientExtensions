@@ -339,10 +339,22 @@ public static class ServiceCollectionExtensions
         });
 
         // Call context propagation (deadline and cancellation token of the current server call)
-        // is opt-in: enabling it unconditionally would let an incoming caller's cancellation and
-        // deadline leak into every downstream call. Set ContextPropagationOptionsAction to enable it.
-        if (options?.ContextPropagationOptionsAction is not null)
-            builder = builder.EnableCallContextPropagation(options.ContextPropagationOptionsAction);
+        // is enabled by default, as it was in Monq.Core.BasicDotNetMicroservice, so that a
+        // cancelled or timed-out request does not leave downstream calls running.
+        // EnableContextPropagation = false opts a client out (technical lookups that must survive
+        // the caller). ContextPropagationOptionsAction runs after the default on the same options
+        // object: every EnableCallContextPropagation call registers a separate interceptor, so
+        // the actions are composed into a single call to keep exactly one of them.
+        if (options?.EnableContextPropagation != false)
+        {
+            var contextPropagationAction = options?.ContextPropagationOptionsAction;
+
+            builder = builder.EnableCallContextPropagation(propagationOptions =>
+            {
+                propagationOptions.SuppressContextNotFoundErrors = true;
+                contextPropagationAction?.Invoke(propagationOptions);
+            });
+        }
 
         return builder;
     }

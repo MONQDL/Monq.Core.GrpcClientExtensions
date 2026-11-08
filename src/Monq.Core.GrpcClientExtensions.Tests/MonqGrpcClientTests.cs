@@ -316,13 +316,13 @@ public class MonqGrpcClientTests
 
         Assert.True(channelOptions.UnsafeUseInsecureChannelCallCredentials);
         Assert.Equal(51 * 1024 * 1024, channelOptions.MaxReceiveMessageSize!.Value);
-        // Call context propagation (deadline/cancellation token) is opt-in, so only the
-        // header propagation interceptor is registered by default.
-        Assert.Equal(1, factoryOptions.InterceptorRegistrations.Count);
+        // Header propagation interceptor + default call context propagation interceptor
+        // (deadline/cancellation token, SuppressContextNotFoundErrors).
+        Assert.Equal(2, factoryOptions.InterceptorRegistrations.Count);
     }
 
     [Fact]
-    public void AddGrpcPreConfiguredClient_ContextPropagationIsOptIn()
+    public void AddGrpcPreConfiguredClient_ContextPropagationCanBeDisabled()
     {
         var services = new ServiceCollection();
         services.AddSingleton(CreateAddressProvider(HttpAddress).Object);
@@ -332,8 +332,8 @@ public class MonqGrpcClientTests
             applicationName,
             options: new GrpcClientOptions
             {
-                ContextPropagationOptionsAction = propagationOptions =>
-                    propagationOptions.SuppressContextNotFoundErrors = true,
+                EnableContextPropagation = false,
+                ContextPropagationOptionsAction = static _ => { },
             });
 
         using var provider = services.BuildServiceProvider();
@@ -341,8 +341,39 @@ public class MonqGrpcClientTests
             .GetRequiredService<IOptionsMonitor<GrpcClientFactoryOptions>>()
             .Get(clientName);
 
-        // Header propagation interceptor + explicitly enabled call context propagation interceptor.
-        Assert.Equal(2, factoryOptions.InterceptorRegistrations.Count);
+        // EnableContextPropagation = false wins: only the header propagation interceptor remains.
+        Assert.Equal(1, factoryOptions.InterceptorRegistrations.Count);
+    }
+
+    [Fact]
+    public void AddGrpcPreConfiguredClient_ContextPropagationOptionsActionKeepsSingleInterceptor()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton(CreateAddressProvider(HttpAddress).Object);
+
+        services.AddGrpcPreConfiguredClient<TestServiceClient>(
+            clientName,
+            applicationName,
+            options: new GrpcClientOptions
+            {
+                ContextPropagationOptionsAction = static propagationOptions =>
+                    propagationOptions.SuppressContextNotFoundErrors = false,
+            });
+
+        using var provider = services.BuildServiceProvider();
+        var factoryOptions = provider
+            .GetRequiredService<IOptionsMonitor<GrpcClientFactoryOptions>>()
+            .Get(clientName);
+
+        var interceptorNames = factoryOptions.InterceptorRegistrations
+            .Select(registration => registration.Creator(provider).GetType().Name)
+            .ToList();
+
+        // The default options and ContextPropagationOptionsAction compose into a single
+        // context propagation interceptor, as it was before the logic left BasicDotNetMicroservice.
+        Assert.Equal(2, interceptorNames.Count);
+        Assert.Single(interceptorNames, name => name == "ContextPropagationInterceptor");
     }
 
     [Fact]
